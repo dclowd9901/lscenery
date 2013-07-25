@@ -50,6 +50,10 @@ var Lscenery = function () {
       return _.map(prop, function (val, key) {
         var fromTraversal = null;
 
+        if (self._isNofollow(val)) {
+          return '';
+        }
+
         if (self._isTextInput(val)) {
           return self._makeTextInput(path.concat([key]), val);
         }
@@ -164,6 +168,10 @@ var Lscenery = function () {
         value:    value
       });
 
+    },
+
+    _isNofollow: function (obj) {
+      if (obj.nofollow) return true;
     },
 
     _isSelect: function (obj) {

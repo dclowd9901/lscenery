@@ -8,6 +8,13 @@ var model = {
                 m: 'moo',
                 n: 'noo'
             },
+            coo: {
+                nofollow: true,
+                coocoo: 'tee',
+                bear: {
+                    bar: 'bean'
+                }
+            }
         },
         c: [{ // fieldset>ul>li>inputs
             f: 'baz',
