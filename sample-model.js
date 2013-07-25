@@ -1,0 +1,35 @@
+var model = {
+    structure: {
+        a: 50, // input
+        b: { // fieldset>inputs
+            d: 'foo',
+            e: 'bar',
+            l: {
+                m: 'moo',
+                n: 'noo',
+            },
+        },
+        c: [{ // fieldset>ul>li>inputs
+            f: 'baz',
+            g: 'biz',
+        }],
+        h: { // select
+            options: [7, 8, 9, 10],
+            value: 7
+        },
+        i: { // range
+            min: 0,
+            max: 15,
+            step: 1,
+            value: 12
+        },
+        j: { // radios
+            radios: [7, 8],
+            value: 7
+        },
+        k: { // checkboxes
+            checkboxes: [7, 8],
+            values: [7, 8]
+        }
+    }
+};
