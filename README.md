@@ -109,13 +109,12 @@ Whenever you nest objects, a new `fieldset` is created.
             a: 50,
             b: {
                 d: 'bar',
-                c: [{
+                c: {
                     min: 0,
                     max: 15,
                     step: 1,
                     value: 12
-                },
-                ]
+                }
             }
         }
     };
