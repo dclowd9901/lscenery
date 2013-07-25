@@ -50,6 +50,22 @@ Put `/templates` directory wherever you house your templates.
         </fieldset>
     */
 
+## Configure
+
+You'll probably have to adjust where the script looks for the templates. 
+The easiest way to do this is after instantiation:
+
+    // Instantiate
+    var l = new Lscenery(),
+        model = { group: { a: 1 } };
+
+    l.PATH_TEMPLATE_PARTIALS = 'path/to/templates/partials.tl';
+
+    l.modelToHTML(model)
+      .done(function ( html ) {
+        console.log(html);
+      });
+
 ## Rules
 
 There are reserved sets of properties. These reserved sets tell Lscenery
