@@ -77,7 +77,7 @@ how to handle a property.
     // To output a 'select' input
     var select = { 
         options: ['one','two','three'], 
-        value: 'two' // 'two' will be selected in the markup
+        value: 'two'            // 'two' will be selected in the markup
     };
 
     // To output a 'range' input
@@ -85,19 +85,19 @@ how to handle a property.
         min: 0, 
         max: 15, 
         step: 1, 
-        value: 12 // The slider will be at the 12 position in the markup
+        value: 12               // The slider will be at the 12 position in the markup
     };
 
     // To output a 'radio' set
     var radio = {
         radios: ['foo', 'bar', 'biz'],
-        value: 'foo' // 'foo' will be selected in the markup
+        value: 'foo'            // 'foo' will be selected in the markup
     };
 
     // To output a 'checkbox' set
     var checkboxes = {
         checkboxes: ['foo', 'bar', 'biz'],
-        values: ['bar', 'biz'] // 'bar' and 'biz' will be selected in the markup
+        values: ['bar', 'biz']  // 'bar' and 'biz' will be selected in the markup
     };
 
 ## Nesting
