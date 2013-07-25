@@ -10,7 +10,7 @@ Lscenery runs up through your JSON structure and does a couple of things
    the structure of the JSON itself.
 
 2) It gives those inputs' `id` and `name` values a meaningful structure
-   with which you can then go back and manipulate the JSON model.
+   that mirrors the model's structure itself.
 
 In other words, the point of Lscenery is to create a low-weight,
 low-interference, unassumptive tie between the UI and the model. This is
