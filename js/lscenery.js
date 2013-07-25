@@ -1,5 +1,8 @@
 var Lscenery = function () {
+
   return {
+    PATH_TEMPLATE_PARTIALS: 'templates/partials.tl',
+
     htmlPartial: '',
     partialLoaded: $.Deferred(),
 
@@ -23,7 +26,7 @@ var Lscenery = function () {
                       return all + set;
                   });
 
-          sets += _.template( self.htmlPartial, {section: 'layout', inner: inner, key: key});
+          sets += _.template( self.htmlPartial, {section: 'layout', inner: inner, key: key}).replace(/\n/gi, '');
         });
         
         doneScaffolding.resolve(sets);
@@ -35,7 +38,7 @@ var Lscenery = function () {
     _getHTMLPartial: function () {
       var self = this;
 
-      $.get('templates/partials.tl').then(function ( data ) { 
+      $.get(this.PATH_TEMPLATE_PARTIALS).then(function ( data ) { 
         self.htmlPartial = data;
         self.partialLoaded.resolve(); 
       });
