@@ -1,0 +1,18 @@
+{
+  "name": "lscenery",
+  "preferGlobal": false,
+  "version": "0.1.0",
+  "author": "dclowd9901 <david.ddrew@gmail.com>",
+  "description": "JSON Model-to-HTML scaffolder",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dclowd9901/lscenery.git"
+  },
+  "keywords": [
+    "json",
+    "html",
+    "scaffold",
+    "generator"
+  ],
+  "license": "MIT"
+}

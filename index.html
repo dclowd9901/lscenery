@@ -2,12 +2,17 @@
 
 <html>
 <head>
-  <script src="lscener.js"></script>
+  <script src="js/jquery.js"></script>
+  <script src="js/lodash.js"></script>
+  <script src="js/lscenery.js"></script>
   <script src="sample-model.js"></script>
   <script>
     var l = new Lscenery();
 
-    l.modelToHtml( model );
+    l.modelToHTML(model)
+      .done(function ( html ) {
+        $('#output').html( html );
+      });
   </script>
 </head>
 <body>

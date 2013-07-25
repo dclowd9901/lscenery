@@ -4,14 +4,18 @@ var model = {
         b: { // fieldset>inputs
             d: 'foo',
             e: 'bar',
-            l: {
+            moo: {
                 m: 'moo',
-                n: 'noo',
+                n: 'noo'
             },
         },
         c: [{ // fieldset>ul>li>inputs
             f: 'baz',
-            g: 'biz',
+            g: 'biz'
+        },
+        { // fieldset>ul>li>inputs
+            f: 'bar',
+            g: 'bir'
         }],
         h: { // select
             options: [7, 8, 9, 10],
