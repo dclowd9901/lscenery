@@ -80,6 +80,13 @@ how to handle a property.
         value: 'two'            // 'two' will be selected in the markup
     };
 
+    // To output a 'select' input with custom option titles
+    var select = { 
+        options: [0, 1, 2],
+        desc: ['Zero', 'One', 'Two'], // Descriptions are mapped to options
+        value: 2                // 'two' will be selected in the markup
+    };    
+
     // To output a 'range' input
     var range = { 
         min: 0, 
