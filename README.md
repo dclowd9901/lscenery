@@ -66,6 +66,14 @@ The easiest way to do this is after instantiation:
         console.log(html);
       });
 
+You may also want to configure the path that is created for the inputs' `name`s and `id`s.
+You can add a prefix to those paths like so:
+
+    l.NAME_PREFIX = ['one','two'];
+
+    // Paths will subsequently look like
+    // one.two.path.to.object
+
 ## Rules
 
 There are reserved sets of properties. These reserved sets tell Lscenery
