@@ -1,46 +1,77 @@
-var model = {
-    structure: {
-        a: 50, // input
-        b: { // fieldset>inputs
-            d: 'foo',
-            e: 'bar',
-            moo: {
-                m: 'moo',
-                n: 'noo'
+var model = { 
+    wave : {
+        scriptName: '',
+        startWhen: '',
+        startOn: '',
+        whenFinished: '',
+        
+        startPriority: {
+          options: [0, 1],
+          desc: ['Enemies are dead', 'Timer finishes'],
+          value: 0
+        },
+
+        layerName: {
+          options: [],
+          value: null
+        },
+
+        enemies: {
+          leader: {
+            className: {
+              options: [],
+              value: null
             },
-            coo: {
-                nofollow: true,
-                coocoo: 'tee',
-                bear: {
-                    bar: 'bean'
-                }
-            }
+            weapons: [{
+              className: {
+                options: [],
+                value: null
+              },
+              firingRate: '',
+              firingDirType: {
+                options: [0, 1],
+                desc: [],
+                value: 0
+              },
+              firingAngle: ''
+            }]
+          },
+          followers: [{
+            className: {
+              options: [],
+              value: null
+            },            
+            trailing: '',
+            offset: {
+              x: '',
+              y: ''
+            },
+            weapons: [{
+              className: {
+                options: [],
+                value: null
+              },
+              firingRate: '',
+              firingDirType: {
+                options: [0, 1],
+                desc: ['Static direction', 'At player'],
+                value: 0
+              },
+              firingAngle: ''
+            }]            
+          }]
         },
-        c: [{ // fieldset>ul>li>inputs
-            f: 'baz',
-            g: 'biz'
-        },
-        { // fieldset>ul>li>inputs
-            f: 'bar',
-            g: 'bir'
-        }],
-        h: { // select
-            options: [7, 8, 9, 10],
-            value: 7
-        },
-        i: { // range
-            min: 0,
-            max: 15,
-            step: 1,
-            value: 12
-        },
-        j: { // radios
-            radios: [7, 8],
-            value: 7
-        },
-        k: { // checkboxes
-            checkboxes: [7, 8],
-            values: [7, 8]
+        script: {
+          directives: [{
+            starting: {
+              min: 0,
+              max: 1,
+              step: 0.1,
+              value: 0
+            },
+            speed: '',
+            waitTime: ''
+          }]
         }
-    }
-};
+      }
+  }

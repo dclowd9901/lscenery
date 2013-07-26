@@ -30,7 +30,7 @@
 
   <% for (var i = 0; i < options.length; i++) { %>
     
-    <option <%= ((i === selectedIndex) ? 'SELECTED' : '') %> value="${options[i]}">${options[i]}</option>
+    <option <%= ((i === selectedIndex) ? 'SELECTED' : '') %> value="${options[i]}">${desc[i]}</option>
 
   <% } %>
 

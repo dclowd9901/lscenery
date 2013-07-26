@@ -141,6 +141,7 @@ var Lscenery = function () {
         name:           path.join('.'),
         key:            _.last(path),
         options:        value.options,
+        desc:           value.desc || value.options,
         selectedIndex:  _.indexOf(value.options, value.value)
       });
 
@@ -171,23 +172,23 @@ var Lscenery = function () {
     },
 
     _isNofollow: function (obj) {
-      if (obj.nofollow) return true;
+      if (obj && obj.nofollow) return true;
     },
 
     _isSelect: function (obj) {
-        if (obj.options && obj.value) return true;
+        if (obj && !_.isUndefined(obj.options) && !_.isUndefined(obj.value)) return true;
     },
 
     _isRange: function (obj) {
-        if (_.isNumber(obj.min) && _.isNumber(obj.max) && _.isNumber(obj.step) && _.isNumber(obj.value)) return true;
+        if (obj && _.isNumber(obj.min) && _.isNumber(obj.max) && _.isNumber(obj.step) && _.isNumber(obj.value)) return true;
     },
 
     _isRadio: function (obj) {
-        if (obj.radios && obj.value) return true;
+        if (obj && !_.isUndefined(obj.radios) && !_.isUndefined(obj.value)) return true;
     },
 
     _isCheckboxes: function (obj) {
-        if (obj.checkboxes && obj.values) return true;
+        if (obj && !_.isUndefined(obj.checkboxes) && !_.isUndefined(obj.values)) return true;
     }
   };
 };
