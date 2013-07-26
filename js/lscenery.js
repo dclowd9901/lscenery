@@ -1,10 +1,25 @@
 var Lscenery = function () {
 
-  return {
-    PATH_TEMPLATE_PARTIALS: 'templates/partials.tl',
+  var properties = {
+    PATH_TEMPLATE_PARTIALS: { 
+      writable: true,
+      value: 'templates/partials.tl'
+    },
+    NAME_PREFIX: {
+      writable: true,
+      value: [],
+    },
+    htmlPartial: {
+      writable: true,
+      value: ''
+    },
+    partialLoaded: {
+      enumerable: true,
+      value: $.Deferred()
+    }
+  };
 
-    htmlPartial: '',
-    partialLoaded: $.Deferred(),
+  var prototype = {
 
     modelToHTML: function (model) {
       var self = this,
@@ -15,19 +30,39 @@ var Lscenery = function () {
       }
 
       $.when(this.partialLoaded).then(function () {   
-        var sets = '';
+        var sets = '',
+            key  = self.NAME_PREFIX,
+            html = [],
+            inner;
 
-        _.forEach(model, function (group, key) {
-          var html = [],
-              inner;
+        html  = html.concat(self._traverse(model, key));
+        inner = _.reduce(_.flatten(html), function (all, set) {
+                  return all + set;
+                });
+        
+        if (key.length) {
+          sets += _.template(self.htmlPartial, {
+                    section: 'layout',
+                    inner: inner,
+                    key: _.last(key)
+                  }).replace(/\n/gi, '');
+        } else {
+          sets += inner;
+        }
 
-          html = html.concat(self._traverse(group, [key]));
-          inner = _.reduce(_.flatten( html ), function (all, set) {
-                      return all + set;
-                  });
+        // _.forEach(model, function (group, key) {
+        //   var html = [],
+        //       inner;
 
-          sets += _.template( self.htmlPartial, {section: 'layout', inner: inner, key: key}).replace(/\n/gi, '');
-        });
+        //   key = self.NAME_PREFIX.concat([key]);
+
+        //   html = html.concat(self._traverse(group, key));
+        //   inner = _.reduce(_.flatten( html ), function (all, set) {
+        //               return all + set;
+        //           });
+
+        //   sets += _.template( self.htmlPartial, {section: 'layout', inner: inner, key: _.last(key)}).replace(/\n/gi, '');
+        // });
         
         doneScaffolding.resolve(sets);
       });
@@ -79,11 +114,11 @@ var Lscenery = function () {
                             return all + set;
                           });
 
-          return _.template(self.htmlPartial, {
-            section: 'layout',
-            key: key,
-            inner: fromTraversal
-          });
+          return  _.template(self.htmlPartial, {
+                    section: 'layout',
+                    key: key,
+                    inner: fromTraversal
+                  });
         }
       });
     },
@@ -104,14 +139,14 @@ var Lscenery = function () {
 
       var selected = _.indexOf(value.radios, value.value);
       
-      return _.template(this.htmlPartial, {
-        section:  'radioInput',
-        name:     path.join('.'),
-        id:       path.join('-'),
-        selected: selected,
-        radios:   value.radios,
-        key:      _.last(path)
-      });
+      return  _.template(this.htmlPartial, {
+                section:  'radioInput',
+                name:     path.join('.'),
+                id:       path.join('-'),
+                selected: selected,
+                radios:   value.radios,
+                key:      _.last(path)
+              });
 
     },
     
@@ -120,14 +155,14 @@ var Lscenery = function () {
                           return _.contains(value.values, checkbox);
                         });
 
-      return _.template(this.htmlPartial, {
-        section:      'checkboxInput',
-        name:         path.join('.'),
-        id:           path.join('-'),
-        selectedMap:  selectedMap,
-        checkboxes:   value.checkboxes,
-        key:          _.last(path)
-      });                
+      return  _.template(this.htmlPartial, {
+                section:      'checkboxInput',
+                name:         path.join('.'),
+                id:           path.join('-'),
+                selectedMap:  selectedMap,
+                checkboxes:   value.checkboxes,
+                key:          _.last(path)
+              });                
         
     },        
     
@@ -135,39 +170,39 @@ var Lscenery = function () {
 
       var selected = _.indexOf(value.options, value.value);
 
-      return _.template(this.htmlPartial, {
-        section:        'selectInput',                
-        id:             path.join('-'),
-        name:           path.join('.'),
-        key:            _.last(path),
-        options:        value.options,
-        desc:           value.desc || value.options,
-        selectedIndex:  _.indexOf(value.options, value.value)
-      });
+      return  _.template(this.htmlPartial, {
+                section:        'selectInput',                
+                id:             path.join('-'),
+                name:           path.join('.'),
+                key:            _.last(path),
+                options:        value.options,
+                desc:           value.desc || value.options,
+                selectedIndex:  _.indexOf(value.options, value.value)
+              });
 
     },
 
     _makeTextInput: function (path, value) {
 
-      return _.template(this.htmlPartial, {
-        section:  'textInput',
-        id:       path.join('-'),
-        name:     path.join('.'),
-        value:    value,
-        key:      _.last(path)
-      });
+      return  _.template(this.htmlPartial, {
+                section:  'textInput',
+                id:       path.join('-'),
+                name:     path.join('.'),
+                value:    value,
+                key:      _.last(path)
+              });
 
     },
     
     _makeRangeInput: function (path, value) {
 
-      return _.template(this.htmlPartial, {
-        section:  'rangeInput',
-        name:     path.join('.'),
-        id:       path.join('-'),
-        key:      _.last(path),
-        value:    value
-      });
+      return  _.template(this.htmlPartial, {
+                section:  'rangeInput',
+                name:     path.join('.'),
+                id:       path.join('-'),
+                key:      _.last(path),
+                value:    value
+              });
 
     },
 
@@ -176,19 +211,21 @@ var Lscenery = function () {
     },
 
     _isSelect: function (obj) {
-        if (obj && !_.isUndefined(obj.options) && !_.isUndefined(obj.value)) return true;
+      if (obj && !_.isUndefined(obj.options) && !_.isUndefined(obj.value)) return true;
     },
 
     _isRange: function (obj) {
-        if (obj && _.isNumber(obj.min) && _.isNumber(obj.max) && _.isNumber(obj.step) && _.isNumber(obj.value)) return true;
+      if (obj && _.isNumber(obj.min) && _.isNumber(obj.max) && _.isNumber(obj.step) && _.isNumber(obj.value)) return true;
     },
 
     _isRadio: function (obj) {
-        if (obj && !_.isUndefined(obj.radios) && !_.isUndefined(obj.value)) return true;
+      if (obj && !_.isUndefined(obj.radios) && !_.isUndefined(obj.value)) return true;
     },
 
     _isCheckboxes: function (obj) {
-        if (obj && !_.isUndefined(obj.checkboxes) && !_.isUndefined(obj.values)) return true;
+      if (obj && !_.isUndefined(obj.checkboxes) && !_.isUndefined(obj.values)) return true;
     }
   };
+
+  return Object.create( prototype, properties );
 };
