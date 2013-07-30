@@ -3,8 +3,8 @@
 
 <% if (section === 'layout') { %>
 
-  <fieldset id="${key}">
-  <legend>${key}</legend>
+  <fieldset class="${key}" id="${key}" data-groupings="${key}">
+  <legend data-groupings="${key}">${key}</legend>
   ${inner}
   </fieldset>
 
@@ -15,8 +15,8 @@
 
 <% if (section === 'textInput') { %>
 
-  <label for="${id}">${key}</label>
-  <input id="${id}" name="${name}" value="${value}" />
+  <label class="${id}" for="${id}" data-groupings="${id}">${key}</label>
+  <input class="${id}" id="${id}" data-groupings="${id}" name="${name}" value="${value}" />
 
 <% } %>
 
@@ -25,8 +25,8 @@
 
 <% if (section === 'selectInput') { %>
 
-  <label for="${id}">${key}</label>
-  <select id="${id}" name="${name}">
+  <label class="${id}" for="${id}" data-groupings="${id}">${key}</label>
+  <select class="${id}" id="${id}" name="${name}" data-groupings="${id}">
 
   <% for (var i = 0; i < options.length; i++) { %>
     
@@ -43,8 +43,8 @@
 
 <% if (section === 'rangeInput') { %>
 
-  <label for="${id}">${key}</label>
-  <input type="range" id="${id}" name="${name}" min="${value.min}" max="${value.max}" step="${value.step}" value="${value.value}">
+  <label class="${id}" for="${id}" data-groupings="${id}">${key}</label>
+  <input class="${id}" type="range" id="${id}" name="${name}" min="${value.min}" max="${value.max}" step="${value.step}" value="${value.value}" data-groupings="${id}">
 
 <% } %>      
 
@@ -53,7 +53,7 @@
 
 <% if (section === 'radioInput') { %>
 
-  <fieldset id="${id}">
+  <fieldset class="${id}" id="${id}" data-groupings="${id}">
     <legend>${key}</legend>
     <ul>
 
@@ -75,7 +75,7 @@
 
 <% if (section === 'checkboxInput') { %>
 
-  <fieldset id="${id}">
+  <fieldset class="${id}" id="${id}" data-groupings="${id}">
     <legend>${key}</legend>
     <ul>
 

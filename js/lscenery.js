@@ -9,73 +9,277 @@ var Lscenery = function () {
       writable: true,
       value: [],
     },
-    htmlPartial: {
+    _htmlPartial: {
       writable: true,
       value: ''
     },
-    partialLoaded: {
+    _partialLoaded: {
       enumerable: true,
       value: $.Deferred()
-    }
+    },
+    _observers: {
+      writable: true,
+      enumerable: true,
+      value: {}
+    },
   };
 
   var prototype = {
+
+    get: function (propName) {
+      if (propName.indexOf('.') === -1) {
+        return this[propName];
+      } else {
+        return this._retrieve(this, propName);
+      }
+    },
+
+    set: function (propName, value, data, silent) {
+
+      var deep           = (propName.indexOf('.') > -1),
+          former         = this.get(propName),
+          propArr        = (deep) ? propName.split('.') : [],
+          collectionPath = propName.split('.*.'),
+          propNamesSet,
+          currentProp,
+          i;
+      
+      if (collectionPath.length > 1) {
+
+        propNamesSet = this.collectionSet(collectionPath, this, value);
+
+      } else {
+        _.merge( this, this._define(propName, value));
+
+        $(this._formEl).find('[name="' + propName + '"]').first().val( value );
+
+        propNamesSet = [ propName ];
+      }
+      
+      if (!silent) {
+
+        this._fireObservers(propName, value, former, data);
+
+        if (propArr.length) {
+          propArr.pop();                    
+          
+          while (propArr.length) {
+            currentProp = propArr.join('.') + '.*';
+            
+            this._fireObservers(currentProp, value, former, data);
+            
+            propArr.pop();                    
+          }
+        }
+      }
+
+      return propNamesSet;
+    },
+
+    collectionSet: function (path, model, value, pathTo) {
+
+      var self = this,
+          pathsSet = [];
+
+      pathTo = (_.isUndefined(pathTo)) ? '' : pathTo + '.';
+
+      if (path.length > 1) {
+        
+        if (_.isArray(model)) {
+
+          pathsSet.push(_.map(model, function (item, key) {
+            return self.collectionSet(_.rest(path), item[path[0]], value, pathTo + key + '.' + path[0]);
+          }));
+
+        } else {
+          
+          if (!this.get(path[0]))
+            this._define(path[0], model);
+
+          return this.collectionSet(_.rest(path), this.get(path[0]), value, pathTo + path[0]);
+        }
+
+      } else {
+        
+        _.forEach(model, function (submodel, key) {
+          submodel[path[0]] = value;
+          pathsSet.push(pathTo + key + '.' + path[0]);
+        });
+
+      }
+
+      return _.flatten(pathsSet);
+
+    },
+
+    observe: function (propName, fn, scope) {
+      fn = scope ? fn.bind( scope ) : fn;
+
+      if( this._observers[propName] ){
+        this._observers[propName].push( fn );
+      } else {
+        this._observers[propName] = [ fn ];
+      }
+    },
+
+    trigger: function (propName, data) {
+      var i;
+
+      this.set(propName, this[propName], data);
+    },
+
+    updateInput: function (path, config) {
+      
+      var pathsSet = this.set(path, config),
+          self = this;
+
+      _.forEach(pathsSet, function (pathSet) {
+        
+        var $input      = $('[name="' + pathSet + '"]'),
+            pathArr     = pathSet.split('.'),        
+            $allRelated = $('[data-groupings="' + pathArr.join('-') + '"]'),
+            tmp         = {},
+            markup;
+
+        tmp[_.last(pathArr)] = self.get(pathSet);
+        markup = self._traverse(tmp, _.initial(pathArr));
+        $input.after(markup);
+        $allRelated.remove();
+
+      });
+
+    },
 
     modelToHTML: function (model) {
       var self = this,
           doneScaffolding = $.Deferred();
 
-      if (!this.htmlPartial){
+      if (!this._htmlPartial){
         this._getHTMLPartial();
       }
 
-      $.when(this.partialLoaded).then(function () {   
+      $.when(this._partialLoaded).then(function () {
+
         var sets = '',
             key  = self.NAME_PREFIX,
-            html = [],
             inner;
 
-        html  = html.concat(self._traverse(model, key));
+        html  = self._traverse(model, key);
         inner = _.reduce(_.flatten(html), function (all, set) {
                   return all + set;
                 });
         
         if (key.length) {
-          sets += _.template(self.htmlPartial, {
+
+          sets += _.template(self._htmlPartial, {
                     section: 'layout',
                     inner: inner,
                     key: _.last(key)
                   }).replace(/\n/gi, '');
+
         } else {
+
           sets += inner;
+
         }
-
-        // _.forEach(model, function (group, key) {
-        //   var html = [],
-        //       inner;
-
-        //   key = self.NAME_PREFIX.concat([key]);
-
-        //   html = html.concat(self._traverse(group, key));
-        //   inner = _.reduce(_.flatten( html ), function (all, set) {
-        //               return all + set;
-        //           });
-
-        //   sets += _.template( self.htmlPartial, {section: 'layout', inner: inner, key: _.last(key)}).replace(/\n/gi, '');
-        // });
         
         doneScaffolding.resolve(sets);
       });
 
       return doneScaffolding;
+    },    
+
+    _define: function (path, value, memoObj) { // if foo.bar
+
+      var pathArr    = path.split('.'),
+          pathFirst  = pathArr.shift(),
+          memoObj    = memoObj ? memoObj : this;
+        
+      if (pathArr.length > 0) {
+        this._define(pathArr.join('.'), value, memoObj[pathFirst]); 
+      } else {
+        this._applyValue(memoObj, pathFirst, value);
+      }
+
+    },
+
+    _applyValue: function (obj, path, value) {
+      
+      if (this._isRange(obj) || this._isSelect(obj)) {
+        obj[path].value = value;
+      } else if (this._isCheckboxes(obj) || this._isRadio(obj)) {
+        obj[path].values = value;
+      } else {
+        obj[path] = value;
+      }
+    },
+
+    _operateOnValue: function (obj, fn) {
+      if (this._isRange(obj) || this._isSelect(obj)) {
+        return fn(obj.value);
+      } else if (this._isCheckboxes(obj) || this._isRadio(obj)) {
+        return fn(obj.values);
+      } else {
+        return fn(obj);
+      }
+    },
+
+    _eventInputs: function () {
+      var self = this;
+
+      $(this._formEl).change( function (e) {
+        self.set( e.target.name, e.target.value, $(e.target).data('groupings') );
+      });
+
+      $(this._formEl).on('keyup change', function (e) {
+        self.set( e.target.name, e.target.value, $(e.target).data('groupings') );
+      });
+    },
+
+    _setInitialVals: function(){
+      var inputs = $('[name]'),
+          self = this;
+
+      _.forEach( inputs, function( input ){
+        self[input.name] = input.value;
+      });
+    },
+
+    _retrieve: function (obj, path) {
+      var self    = this,
+          pathArr = path.split('.'),
+          sets    = [];
+
+      if( pathArr.length > 1 ){
+        if (pathArr[0] === '*') {
+          return _.map(obj, function (subset, key) {
+            return self._retrieve(obj[key], _.rest(pathArr).join('.'));
+          });
+        }
+        return this._retrieve(obj[pathArr[0]], _.rest(pathArr).join('.'));
+      } else {
+        return obj[path];
+      }
+    },
+
+    _fireObservers: function (propName, value, former, data) {
+      if (this._observers[propName]) {
+        for (i = 0; i < this._observers[propName].length; i++) {
+          if (!_.isUndefined(value.value)) {
+            this._observers[propName][i](value.value, former.value, data, propName);
+          } else {
+            this._observers[propName][i](value, former, data, propName);
+          }
+        }
+      }
     },
 
     _getHTMLPartial: function () {
       var self = this;
 
-      $.get(this.PATH_TEMPLATE_PARTIALS).then(function ( data ) { 
-        self.htmlPartial = data;
-        self.partialLoaded.resolve(); 
+      $.get(this.PATH_TEMPLATE_PARTIALS).then(function (data) {
+        self._htmlPartial = data;
+        self._partialLoaded.resolve(); 
       });
     },
 
@@ -114,7 +318,7 @@ var Lscenery = function () {
                             return all + set;
                           });
 
-          return  _.template(self.htmlPartial, {
+          return  _.template(self._htmlPartial, {
                     section: 'layout',
                     key: key,
                     inner: fromTraversal
@@ -139,7 +343,7 @@ var Lscenery = function () {
 
       var selected = _.indexOf(value.radios, value.value);
       
-      return  _.template(this.htmlPartial, {
+      return  _.template(this._htmlPartial, {
                 section:  'radioInput',
                 name:     path.join('.'),
                 id:       path.join('-'),
@@ -155,7 +359,7 @@ var Lscenery = function () {
                           return _.contains(value.values, checkbox);
                         });
 
-      return  _.template(this.htmlPartial, {
+      return  _.template(this._htmlPartial, {
                 section:      'checkboxInput',
                 name:         path.join('.'),
                 id:           path.join('-'),
@@ -170,7 +374,7 @@ var Lscenery = function () {
 
       var selected = _.indexOf(value.options, value.value);
 
-      return  _.template(this.htmlPartial, {
+      return  _.template(this._htmlPartial, {
                 section:        'selectInput',                
                 id:             path.join('-'),
                 name:           path.join('.'),
@@ -184,7 +388,7 @@ var Lscenery = function () {
 
     _makeTextInput: function (path, value) {
 
-      return  _.template(this.htmlPartial, {
+      return  _.template(this._htmlPartial, {
                 section:  'textInput',
                 id:       path.join('-'),
                 name:     path.join('.'),
@@ -196,7 +400,7 @@ var Lscenery = function () {
     
     _makeRangeInput: function (path, value) {
 
-      return  _.template(this.htmlPartial, {
+      return  _.template(this._htmlPartial, {
                 section:  'rangeInput',
                 name:     path.join('.'),
                 id:       path.join('-'),
@@ -224,6 +428,18 @@ var Lscenery = function () {
 
     _isCheckboxes: function (obj) {
       if (obj && !_.isUndefined(obj.checkboxes) && !_.isUndefined(obj.values)) return true;
+    },
+
+    __debug: function () {
+      var self = this;
+      _.forEach(self.__proto__, function (method, name) {
+        if (_.isFunction(method)) {
+          self.__proto__[name] = function () {
+            console.log(name, 'was called', ', args:', arguments);                    
+            return method.apply(self, arguments);
+          }
+        }
+      });      
     }
   };
 
