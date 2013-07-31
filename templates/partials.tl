@@ -16,7 +16,7 @@
 <% if (section === 'textInput') { %>
 
   <label class="${id}" for="${id}" data-groupings="${id}">${key}</label>
-  <input class="${id}" id="${id}" data-groupings="${id}" name="${name}" value="${value}" />
+  <input type="text" class="${id}" id="${id}" data-groupings="${id}" name="${name}" value="${value}" />
 
 <% } %>
 

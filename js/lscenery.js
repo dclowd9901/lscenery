@@ -1,28 +1,46 @@
-var Lscenery = function () {
+var Lscenery = function (userProps) {
 
   var properties = {
     PATH_TEMPLATE_PARTIALS: { 
+      enumerable: false,
+      configurable: false,
       writable: true,
       value: 'templates/partials.tl'
     },
     NAME_PREFIX: {
+      enumerable: false,
+      configurable: false,
       writable: true,
-      value: [],
+      value: []
     },
     _htmlPartial: {
+      enumerable: false,
+      configurable: false,
       writable: true,
       value: ''
     },
     _partialLoaded: {
-      enumerable: true,
+      enumerable: false,
+      configurable: false,
+      writable: true,
       value: $.Deferred()
     },
     _observers: {
-      writable: true,
-      enumerable: true,
+      enumerable: false,      
+      configurable: false,
+      writable: true,      
       value: {}
-    },
+    }
   };
+
+  _.forEach(userProps, function (value, key) {
+    properties[key] = {
+      writable: true,
+      configurable: true,
+      enumerable: true,
+      value: value
+    };
+  });  
 
   var prototype = {
 
@@ -113,6 +131,7 @@ var Lscenery = function () {
     },
 
     observe: function (propName, fn, scope) {
+
       fn = scope ? fn.bind( scope ) : fn;
 
       if( this._observers[propName] ){
@@ -120,12 +139,15 @@ var Lscenery = function () {
       } else {
         this._observers[propName] = [ fn ];
       }
+      
     },
 
     trigger: function (propName, data) {
+
       var i;
 
       this.set(propName, this[propName], data);
+
     },
 
     updateInput: function (path, config) {
@@ -150,7 +172,7 @@ var Lscenery = function () {
 
     },
 
-    modelToHTML: function (model) {
+    modelToHTML: function () {
       var self = this,
           doneScaffolding = $.Deferred();
 
@@ -164,7 +186,7 @@ var Lscenery = function () {
             key  = self.NAME_PREFIX,
             inner;
 
-        html  = self._traverse(model, key);
+        html  = self._traverse(self, key);
         inner = _.reduce(_.flatten(html), function (all, set) {
                   return all + set;
                 });
@@ -182,9 +204,13 @@ var Lscenery = function () {
           sets += inner;
 
         }
+
+        self._formEl = $(sets);
+        self._eventInputs();
         
-        doneScaffolding.resolve(sets);
+        doneScaffolding.resolve(self._formEl);
       });
+
 
       return doneScaffolding;
     },    
@@ -192,8 +218,9 @@ var Lscenery = function () {
     _define: function (path, value, memoObj) { // if foo.bar
 
       var pathArr    = path.split('.'),
-          pathFirst  = pathArr.shift(),
-          memoObj    = memoObj ? memoObj : this;
+          pathFirst  = pathArr.shift();
+
+      memoObj = memoObj ? memoObj : this;         
         
       if (pathArr.length > 0) {
         this._define(pathArr.join('.'), value, memoObj[pathFirst]); 
@@ -226,14 +253,17 @@ var Lscenery = function () {
 
     _eventInputs: function () {
       var self = this;
-
-      $(this._formEl).change( function (e) {
-        self.set( e.target.name, e.target.value, $(e.target).data('groupings') );
+      
+      $(this._formEl).on('keyup', function (e) {
+          self.set( e.target.name, e.target.value, $(e.target).data('groupings') );
       });
 
-      $(this._formEl).on('keyup change', function (e) {
-        self.set( e.target.name, e.target.value, $(e.target).data('groupings') );
-      });
+      $(this._formEl).on('change', function (e) {
+
+        if (!$(e.target).is('[type="text"]')) // Prevents double eventing on text inputs
+          self.set( e.target.name, e.target.value, $(e.target).data('groupings') );
+
+      });      
     },
 
     _setInitialVals: function(){
@@ -262,6 +292,7 @@ var Lscenery = function () {
       }
     },
 
+    // TODO: Need to normalize which value is sent
     _fireObservers: function (propName, value, former, data) {
       if (this._observers[propName]) {
         for (i = 0; i < this._observers[propName].length; i++) {
@@ -432,12 +463,15 @@ var Lscenery = function () {
 
     __debug: function () {
       var self = this;
+
+      window.lsceneryModels = window.lsceneryModels ? window.lsceneryModels : [this];
+
       _.forEach(self.__proto__, function (method, name) {
         if (_.isFunction(method)) {
           self.__proto__[name] = function () {
             console.log(name, 'was called', ', args:', arguments);                    
             return method.apply(self, arguments);
-          }
+          };
         }
       });      
     }

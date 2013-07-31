@@ -34,15 +34,15 @@ Put `/templates` directory wherever you house your templates.
 ## Use
 
     // Instantiate
-    var l = new Lscenery(),
-        model = { group: { a: 1 } };
+    var model = { group: { a: 1 } },
+        l = new Lscenery();
 
-    l.modelToHTML(model)
-      .done(function ( html ) {
-        console.log(html);
+    l.modelToHTML()
+      .done(function (el) {
+        console.log(el);
       });
 
-    /*  
+    /*  Dom Object:
         <fieldset id="group">  
             <legend>group</legend>    
             <label for="group-a">a</label>  
@@ -56,14 +56,14 @@ You'll probably have to adjust where the script looks for the templates.
 The easiest way to do this is after instantiation:
 
     // Instantiate
-    var l = new Lscenery(),
-        model = { group: { a: 1 } };
+    var model = { group: { a: 1 } },
+        l = new Lscenery();
 
     l.PATH_TEMPLATE_PARTIALS = 'path/to/templates/partials.tl';
 
-    l.modelToHTML(model)
-      .done(function ( html ) {
-        console.log(html);
+    l.modelToHTML()
+      .done(function ( el ) {
+        console.log(el);
       });
 
 You may also want to configure the path that is created for the inputs' `name`s and `id`s.
@@ -73,6 +73,21 @@ You can add a prefix to those paths like so:
 
     // Paths will subsequently look like
     // one.two.path.to.object
+
+When working with event-based frameworks, it can be helpful for debugging to
+see what is firing when. To achieve this, there is an internal helper function
+that wraps all internal functions and outputs their name and their arguments when
+they get fired. You can activate it like this:
+
+    l.__debug();
+
+and get console logging like this:
+
+    // modelToHTML was called , args: []
+    // _getHTMLPartial was called , args: []
+    // _traverse was called , args: [Object, Array[0]]
+ 
+Debug Mode also exposes the model to the Global 
 
 ## Rules
 
@@ -192,7 +207,108 @@ Putting objects in an array does the same thing, but it also gives them an ident
     </fieldset>
     */
 
-## Continuing work
+## KVO
 
-I'll soon be adding the mechanism to track and update changes from the UI -- You'll also be able to 
-subscribe to these changes and handle onchange and keyup events.
+One of the central features of this library is the ability to subscribe to changes in values in the model. These changes can come in the form of either UI interaction events (changing an option on a select, inputting a new value in a field), or by utilizing getters and setters on the model.
+
+### `get` and `set`
+
+Setting and getting values relies on 'querying' the model utilizing dot-notation. For example:
+
+    var model = { group: { a: 1 } },
+        l = new Lscenery(model);
+
+    // Get 'a'
+    l.get('group.a');
+
+    // 1
+
+    // get 'group'
+    l.get('group');
+
+    // {a : 1}
+
+    // Set 'a'
+    l.set('group.a', 2);
+
+    // l.get('group.a') === 2
+
+    // set 'group'
+    l.set('group', 'foo');
+
+    // l.get('group.a') === undefined
+    // l.get('group') === 'foo'
+
+### Observation with `observe`
+
+Using the same dot notation, you can observe and act on changes to the model.
+
+    var model = { group: { a: { b: 1 } } },
+        l = new Lscenery(model);
+
+    l.observe('group.a.b', function (newValue, oldValue, passedData, propName) {
+        console.log("I'm " + newValue);
+    });
+
+    l.set('group.a.b', 2);
+
+    // I'm 2
+
+You can also do neat things like observe changes from a higher level in the chain:
+
+    l.observe('group.*', function (newValue) {
+        console.log("I'm now " + newValue);
+    });
+
+    l.set('group.a.b', 3);
+
+    // I'm now 3
+
+Or like setting subobject properties amongst an array of duplicate objects
+
+    var model = {
+        a: [{
+            b: 3
+        },
+        {
+            b: 10
+        }]
+    },
+    l = new Lscenery(model);
+
+    l.set('a.*.b', 5);
+    l.get('a');
+
+    // { a: [ { b: 5 }, { b: 5 } ] }
+
+You can do this for as many nested arrays as you like (ex: 'a.\*.b.\*.c...'). Just know 
+that this can get very expensive fairly quickly (as each asterisk represents an array 
+which is crawled all the way through). The onus is on you to create a data structure 
+that isn't insane.
+
+## Updating markup
+
+From time to time, you may want the ability to disceetly update the input portions
+of your markup. For instance, if you had multiple select menus, where a second had
+certainly values depending on the selection of the first one (think vehicle make and
+model selection).
+
+You can do that with the `updateInput` function:
+
+    var data = { 
+        carModel: {
+            options: ['Impreza', 'Forester', 'Outback', 'BR-Z'],
+            value: ['Impreza']
+        }
+    },
+    l = new Lscenery(data);
+
+    l.modelToHTML()
+        .done(function (el) {
+            $('.container').append(el);
+        });
+
+    l.updateInput('carModel', {
+        options: ['Civic', 'Accord', 'Odyssey', 'Crosstour'],
+        value: ['Civic']
+    });

@@ -8,11 +8,14 @@
   <script src="sample-model.js"></script>
 
   <script>
-    var l = new Lscenery();
-    l.__debug();
-    l.modelToHTML(model)
-      .done(function ( html ) {
-        $('#output').html( html );
+    var l = new Lscenery(model);
+
+    // Uncomment to see method calls in the console
+    // l.__debug();
+    
+    l.modelToHTML()
+      .done(function (el) {
+        $('#output').append(el);
       });
   </script>
 
