@@ -44,11 +44,11 @@ var Lscenery = function (userProps) {
 
   var prototype = {
 
-    get: function (propName) {
+    get: function (propName, raw) {
       if (propName.indexOf('.') === -1) {
-        return this[propName];
+        return raw ? this[propName] : this._getValue(this[propName]);
       } else {
-        return this._retrieve(this, propName);
+        return this._retrieve(this, propName, raw);
       }
     },
 
@@ -60,18 +60,32 @@ var Lscenery = function (userProps) {
           collectionPath = propName.split('.*.'),
           propNamesSet,
           currentProp,
+          tmp,
           i;
+
+      // If a checkbox input, compile all currently checked
+      if (this._isCheckboxes(this.get(propName, true))) {
+        value = this._getChecked(propName);
+      }
       
       if (collectionPath.length > 1) {
 
         propNamesSet = this.collectionSet(collectionPath, this, value);
 
       } else {
-        _.merge( this, this._define(propName, value));
 
-        $(this._formEl).find('[name="' + propName + '"]').first().val( value );
+        _.merge(this, this._define(propName, value));
 
         propNamesSet = [ propName ];
+      
+      }
+
+      tmp = this.get(propName, true);
+
+      if (this._isText(tmp) || this._isSelect(tmp) || this._isRange(tmp)) {
+
+        $(this._formEl).find('[name="' + propName + '"]').first().val(value);
+
       }
       
       if (!silent) {
@@ -106,7 +120,9 @@ var Lscenery = function (userProps) {
         if (_.isArray(model)) {
 
           pathsSet.push(_.map(model, function (item, key) {
+            
             return self.collectionSet(_.rest(path), item[path[0]], value, pathTo + key + '.' + path[0]);
+          
           }));
 
         } else {
@@ -120,10 +136,11 @@ var Lscenery = function (userProps) {
       } else {
         
         _.forEach(model, function (submodel, key) {
+
           submodel[path[0]] = value;
           pathsSet.push(pathTo + key + '.' + path[0]);
+        
         });
-
       }
 
       return _.flatten(pathsSet);
@@ -135,11 +152,14 @@ var Lscenery = function (userProps) {
       fn = scope ? fn.bind( scope ) : fn;
 
       if( this._observers[propName] ){
+
         this._observers[propName].push( fn );
-      } else {
-        this._observers[propName] = [ fn ];
-      }
       
+      } else {
+      
+        this._observers[propName] = [ fn ];
+      
+      }
     },
 
     trigger: function (propName, data) {
@@ -169,7 +189,6 @@ var Lscenery = function (userProps) {
         $allRelated.remove();
 
       });
-
     },
 
     modelToHTML: function () {
@@ -177,7 +196,9 @@ var Lscenery = function (userProps) {
           doneScaffolding = $.Deferred();
 
       if (!this._htmlPartial){
+
         this._getHTMLPartial();
+      
       }
 
       $.when(this._partialLoaded).then(function () {
@@ -213,7 +234,17 @@ var Lscenery = function (userProps) {
 
 
       return doneScaffolding;
-    },    
+    },
+
+    _getChecked: function (path) {
+      var checked;
+
+      $checked = this._formEl.find('[name="' + path + '"]:checked');
+
+      return _.map( $checked, function (el) {
+        return el.value;
+      });
+    },
 
     _define: function (path, value, memoObj) { // if foo.bar
 
@@ -223,39 +254,60 @@ var Lscenery = function (userProps) {
       memoObj = memoObj ? memoObj : this;         
         
       if (pathArr.length > 0) {
-        this._define(pathArr.join('.'), value, memoObj[pathFirst]); 
-      } else {
-        this._applyValue(memoObj, pathFirst, value);
-      }
 
+        this._define(pathArr.join('.'), value, memoObj[pathFirst]); 
+      
+      } else {
+      
+        this._applyValue(memoObj, pathFirst, value);
+      
+      }
     },
 
     _applyValue: function (obj, path, value) {
+      var cachedObj = obj[path];
+
+      if (this._isRange(cachedObj) || this._isSelect(cachedObj) || this._isRadio(cachedObj)) {
+
+        cachedObj.value = value;
+
+      } else if (this._isCheckboxes(cachedObj)) {
+
+        cachedObj.values = value;
       
-      if (this._isRange(obj) || this._isSelect(obj)) {
-        obj[path].value = value;
-      } else if (this._isCheckboxes(obj) || this._isRadio(obj)) {
-        obj[path].values = value;
       } else {
-        obj[path] = value;
+      
+        cachedObj = value;
+      
       }
     },
 
-    _operateOnValue: function (obj, fn) {
-      if (this._isRange(obj) || this._isSelect(obj)) {
-        return fn(obj.value);
-      } else if (this._isCheckboxes(obj) || this._isRadio(obj)) {
-        return fn(obj.values);
+    // Normalizes the value return on a certain property, 
+    // be it input or standard
+    _getValue: function (value) {
+
+      if (this._isSelect(value) || this._isRadio(value) || this._isRange(value)) {
+
+        return value.value;
+      
+      } else if (this._isCheckboxes(value)) {
+      
+        return value.values;
+      
       } else {
-        return fn(obj);
+      
+        return value;
+      
       }
-    },
+    },    
 
     _eventInputs: function () {
       var self = this;
       
       $(this._formEl).on('keyup', function (e) {
-          self.set( e.target.name, e.target.value, $(e.target).data('groupings') );
+      
+        self.set( e.target.name, e.target.value, $(e.target).data('groupings') );
+      
       });
 
       $(this._formEl).on('change', function (e) {
@@ -271,36 +323,49 @@ var Lscenery = function (userProps) {
           self = this;
 
       _.forEach( inputs, function( input ){
+      
         self[input.name] = input.value;
+      
       });
     },
 
-    _retrieve: function (obj, path) {
+    _retrieve: function (obj, path, raw) {
       var self    = this,
           pathArr = path.split('.'),
           sets    = [];
 
       if( pathArr.length > 1 ){
+      
         if (pathArr[0] === '*') {
+      
           return _.map(obj, function (subset, key) {
-            return self._retrieve(obj[key], _.rest(pathArr).join('.'));
+      
+            return self._retrieve(obj[key], _.rest(pathArr).join('.'), raw);
+      
           });
         }
-        return this._retrieve(obj[pathArr[0]], _.rest(pathArr).join('.'));
+      
+        return this._retrieve(obj[pathArr[0]], _.rest(pathArr).join('.'), raw);
+      
       } else {
-        return obj[path];
+      
+        return raw ? obj[path] : this._getValue(obj[path]);
+      
       }
     },
 
-    // TODO: Need to normalize which value is sent
     _fireObservers: function (propName, value, former, data) {
+
       if (this._observers[propName]) {
+
         for (i = 0; i < this._observers[propName].length; i++) {
-          if (!_.isUndefined(value.value)) {
-            this._observers[propName][i](value.value, former.value, data, propName);
-          } else {
-            this._observers[propName][i](value, former, data, propName);
-          }
+
+          this._observers[propName][i](
+            this._getValue(value), 
+            this._getValue(former),
+            data, 
+            propName
+          );
         }
       }
     },
@@ -318,6 +383,7 @@ var Lscenery = function (userProps) {
       var self = this;
 
       return _.map(prop, function (val, key) {
+
         var fromTraversal = null;
 
         if (self._isNofollow(val)) {
@@ -441,6 +507,10 @@ var Lscenery = function (userProps) {
 
     },
 
+    _isText: function (obj) {
+      return _.isNumber(obj) || _.isString(obj) || _.isBoolean(obj);
+    },
+
     _isNofollow: function (obj) {
       if (obj && obj.nofollow) return true;
     },
@@ -467,12 +537,16 @@ var Lscenery = function (userProps) {
       window.lsceneryModels = window.lsceneryModels ? window.lsceneryModels : [this];
 
       _.forEach(self.__proto__, function (method, name) {
+
         if (_.isFunction(method)) {
+        
           self.__proto__[name] = function () {
+          
             console.log(name, 'was called', ', args:', arguments);                    
             return method.apply(self, arguments);
+          
           };
-        }
+        }  
       });      
     }
   };

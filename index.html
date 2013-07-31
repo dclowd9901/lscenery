@@ -17,6 +17,11 @@
       .done(function (el) {
         $('#output').append(el);
       });
+
+    l.observe('structure.h', function (newVal, formerVal) {
+      console.log(newVal, formerVal);
+    });
+
   </script>
 
 </head>
