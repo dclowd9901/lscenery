@@ -1,10 +1,15 @@
 # Lscenery
 
-Lscenery will create logical form markup from your JSON.
+Lscenery creates an actionable model that allows key-value observance, and 
+will create logical form markup from your JSON.
 
 ## What's it for?
 
-Lscenery runs up through your JSON structure and does a couple of things
+First, Lscenery supercharges JSON structures with the ability to subscribe
+to changes on the model, and to query on the model itself with notation
+you might be familiar with if you've used MongoDB.
+
+Second, Lscenery runs up through your JSON structure and does a couple of things
 
 1) It figures out what kind of input markup should be displayed based on
    the structure of the JSON itself.
@@ -27,7 +32,7 @@ bony-er
 
 ## Install
 
-Put lscenery.js in your scripts directory.
+Put `lscenery.js` in your scripts directory.
 
 Put `/templates` directory wherever you house your templates.
 
@@ -74,9 +79,9 @@ You can add a prefix to those paths like so:
     // Paths will subsequently look like
     // one.two.path.to.object
 
-When working with event-based frameworks, it can be helpful for debugging to
-see what is firing when. To achieve this, there is an internal helper function
-that wraps all internal functions and outputs their name and their arguments when
+When working with event-based frameworks, it can be helpful for debugging performance and
+event loops to see what is firing when. To achieve this, there is an internal helper 
+function that wraps all internal functions and outputs their name and their arguments when
 they get fired. You can activate it like this:
 
     l.__debug();
@@ -87,7 +92,8 @@ and get console logging like this:
     // _getHTMLPartial was called , args: []
     // _traverse was called , args: [Object, Array[0]]
  
-Debug Mode also exposes the model to the Global 
+Debug Mode also exposes the model to the global `window` namespace. If you extend Lscenery
+on its prototype, the extended methods, too, will be announced when they are fired.
 
 ## Rules
 
