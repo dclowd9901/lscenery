@@ -245,6 +245,32 @@ Setting and getting values relies on 'querying' the model utilizing dot-notation
     // l.get('group.a') === undefined
     // l.get('group') === 'foo'
 
+You can even set subobject properties amongst an array of duplicate objects using the `*`
+notation (as a standin for the array):
+
+    var model = {
+        a: [{
+            b: 3
+        },
+        {
+            b: 10
+        }]
+    },
+    l = new Lscenery(model);
+
+    l.set('a.*.b', 5);
+    l.get('a');
+
+    // [ { b: 5 }, { b: 5 } ]
+
+You can do this for as many nested arrays as you like (ex: 'a.\*.b.\*.c...'). Just know 
+that this can get very expensive fairly quickly (as each asterisk represents an array 
+which is crawled all the way through). The onus is on you to create a data structure 
+that isn't insane.
+
+Theoretically, this should work for any collection of objects, be they in an array, or
+associative, like a series of properties.
+
 ### Observation with `observe`
 
 Using the same dot notation, you can observe and act on changes to the model.
@@ -269,28 +295,6 @@ You can also do neat things like observe changes from a higher level in the chai
     l.set('group.a.b', 3);
 
     // I'm now 3
-
-Or like setting subobject properties amongst an array of duplicate objects
-
-    var model = {
-        a: [{
-            b: 3
-        },
-        {
-            b: 10
-        }]
-    },
-    l = new Lscenery(model);
-
-    l.set('a.*.b', 5);
-    l.get('a');
-
-    // { a: [ { b: 5 }, { b: 5 } ] }
-
-You can do this for as many nested arrays as you like (ex: 'a.\*.b.\*.c...'). Just know 
-that this can get very expensive fairly quickly (as each asterisk represents an array 
-which is crawled all the way through). The onus is on you to create a data structure 
-that isn't insane.
 
 ## Updating markup
 
